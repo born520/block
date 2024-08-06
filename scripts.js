@@ -1,50 +1,43 @@
 const rssUrl = 'https://born520.github.io/rss/';
 const tubeUrl = 'https://born520.github.io/tube/';
-let rssItems = [];
-let tubeItems = [];
+let rssContent = [];
+let tubeContent = [];
 let currentIndex = 0;
 
-document.addEventListener('DOMContentLoaded', () => {
-    Promise.all([fetchContent(rssUrl, 'rss'), fetchContent(tubeUrl, 'tube')])
-        .then(() => displayContent())
-        .catch(error => console.error('Error loading content:', error));
+document.addEventListener('DOMContentLoaded', function() {
+    fetchContents();
 });
 
-function fetchContent(url, type) {
-    return fetch(url)
-        .then(response => response.text())
-        .then(html => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const items = doc.querySelectorAll(type === 'rss' ? 'item' : '.videoItem'); // Adjust selectors as needed
-            const content = Array.from(items).map(item => item.outerHTML);
-
-            if (type === 'rss') {
-                rssItems = content;
-            } else {
-                tubeItems = content;
-            }
-        });
+async function fetchContents() {
+    const rssResponse = await fetch(rssUrl);
+    const tubeResponse = await fetch(tubeUrl);
+    rssContent = await parseContent(await rssResponse.text());
+    tubeContent = await parseContent(await tubeResponse.text());
+    displayContents();
 }
 
-function displayContent() {
+async function parseContent(html) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    // Example: Assuming the contents are within <div class="item"> in HTML
+    return Array.from(doc.querySelectorAll('.item')).map(item => item.outerHTML);
+}
+
+function displayContents() {
     const contentContainer = document.getElementById('contentContainer');
     contentContainer.innerHTML = ''; // Clear the container
+    let maxItems = Math.max(rssContent.length, tubeContent.length);
 
-    const maxItems = Math.max(rssItems.length, tubeItems.length);
     for (let i = 0; i < maxItems; i++) {
-        if (i < rssItems.length) {
-            const rssElement = document.createElement('div');
-            rssElement.className = 'contentItem';
-            rssElement.innerHTML = rssItems[i];
-            contentContainer.appendChild(rssElement);
+        if (i < rssContent.length) {
+            const item = document.createElement('div');
+            item.innerHTML = rssContent[i];
+            contentContainer.appendChild(item);
         }
-
-        if (i < tubeItems.length) {
-            const tubeElement = document.createElement('div');
-            tubeElement.className = 'contentItem';
-            tubeElement.innerHTML = tubeItems[i];
-            contentContainer.appendChild(tubeElement);
+        if (i < tubeContent.length) {
+            const item = document.createElement('div');
+            item.innerHTML = tubeContent[i];
+            contentContainer.appendChild(item);
         }
     }
 }
