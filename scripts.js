@@ -3,38 +3,39 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function fetchDataAndDisplay() {
-    const rssUrl = 'https://script.google.com/macros/s/AKfycbx6k0-G1Uv6YHdMg2RP3uuFgrNVt1OgzWzchIKC53dXFut7EXNw4VlpWxN9M9_YSEM/exec';
-    const tubeUrl = 'https://script.google.com/macros/s/AKfycbxriZtrysnwgb-VyNsbMHCYd84Ft5835UKFAX7Z8ZelFUyAvis_zd1uPKfKsUJXuIdTgg/exec';
-    
     try {
-        // Fetch data from both web apps
-        const [rssResponse, tubeResponse] = await Promise.all([
-            fetch(rssUrl).then(response => response.json()),
-            fetch(tubeUrl).then(response => response.json())
-        ]);
+        const rssResponse = await fetch('https://script.google.com/macros/s/AKfycbx6k0-G1Uv6YHdMg2RP3uuFgrNVt1OgzWzchIKC53dXFut7EXNw4VlpWxN9M9_YSEM/exec');
+        const tubeResponse = await fetch('https://script.google.com/macros/s/AKfycbxriZtrysnwgb-VyNsbMHCYd84Ft5835UKFAX7Z8ZelFUyAvis_zd1uPKfKsUJXuIdTgg/exec');
+        
+        if (!rssResponse.ok || !tubeResponse.ok) {
+            throw new Error('Failed to fetch data');
+        }
 
-        // Assuming the responses are arrays of items
-        displayContentAlternately(rssResponse, tubeResponse);
+        const rssItems = await rssResponse.json();
+        const tubeItems = await tubeResponse.json();
+        
+        console.log('RSS Items:', rssItems);
+        console.log('Tube Items:', tubeItems);
+
+        displayContents(rssItems, tubeItems);
     } catch (error) {
-        console.error('Failed to fetch data:', error);
+        console.error('Error fetching data:', error);
     }
 }
 
-function displayContentAlternately(rssItems, tubeItems) {
+function displayContents(rssItems, tubeItems) {
     const contentContainer = document.getElementById('contentContainer');
-    contentContainer.innerHTML = ''; // Clear previous contents
+    contentContainer.innerHTML = '';
 
-    const maxItems = Math.max(rssItems.length, tubeItems.length);
-    for (let i = 0; i < maxItems; i++) {
-        if (i < rssItems.length) {
-            const item = document.createElement('div');
-            item.innerHTML = `<h3>${rssItems[i].title}</h3><p>${rssItems[i].description}</p>`;
-            contentContainer.appendChild(item);
-        }
-        if (i < tubeItems.length) {
-            const item = document.createElement('div');
-            item.innerHTML = `<h3>${tubeItems[i].title}</h3><img src="${tubeItems[i].thumbnail}" alt="Thumbnail">`;
-            contentContainer.appendChild(item);
-        }
-    }
+    rssItems.forEach(item => {
+        const div = document.createElement('div');
+        div.innerHTML = `<h3>${item.title}</h3><p>${item.description}</p>`;
+        contentContainer.appendChild(div);
+    });
+
+    tubeItems.forEach(item => {
+        const div = document.createElement('div');
+        div.innerHTML = `<h3>${item.title}</h3><img src="${item.thumbnail}" alt="Thumbnail">`;
+        contentContainer.appendChild(div);
+    });
 }
