@@ -1,102 +1,62 @@
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbxoZIaPaQe_Pvb9QrvQWgjxAsx2jOIphAUJj0rZpjpoihvQtRXhdLrF484BeaFZf3cXqA/exec';
+const rssUrl = 'https://born520.github.io/rss/';
+const tubeUrl = 'https://born520.github.io/tube/';
+let currentIndex = 0;
+let rssContent = [];
+let tubeContent = [];
 
-const CACHE_EXPIRATION_TIME = 3600000; // 1시간 (밀리초 단위)
+document.addEventListener('DOMContentLoaded', () => {
+    loadRssContent();
+    loadTubeContent();
+});
 
-function loadVideos() {
-    const cachedData = localStorage.getItem('videoData');
-    const cacheTimestamp = localStorage.getItem('cacheTimestamp');
+function loadRssContent() {
+    fetch(rssUrl)
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const items = doc.querySelectorAll('item'); // Assuming RSS format
+            rssContent = Array.from(items).map(item => item.outerHTML);
+            if (tubeContent.length > 0) {
+                showNextContent();
+            }
+        })
+        .catch(error => console.error('Error loading RSS content:', error));
+}
 
-    const now = new Date().getTime();
+function loadTubeContent() {
+    fetch(tubeUrl)
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const items = doc.querySelectorAll('.videoItem'); // Assuming each video is in a .videoItem class
+            tubeContent = Array.from(items).map(item => item.outerHTML);
+            if (rssContent.length > 0) {
+                showNextContent();
+            }
+        })
+        .catch(error => console.error('Error loading Tube content:', error));
+}
 
-    if (cachedData && cacheTimestamp && (now - cacheTimestamp < CACHE_EXPIRATION_TIME)) {
-        renderThumbnails(JSON.parse(cachedData));
-        lazyLoadImages();
-    } else {
-        fetch(scriptUrl)
-            .then(response => response.json())
-            .then(data => {
-                // 데이터 정렬: 최근 항목이 앞에 오도록 역순으로 정렬
-                const sortedData = data.reverse(); 
-                localStorage.setItem('videoData', JSON.stringify(sortedData));
-                localStorage.setItem('cacheTimestamp', now); // 타임스탬프 저장
-                renderThumbnails(sortedData);
-                lazyLoadImages();
-            })
-            .catch(error => {
-                console.error('Error loading data:', error);
-                document.getElementById('videoList').innerHTML = 'Failed to load videos.';
-            });
+function showNextContent() {
+    const contentContainer = document.getElementById('contentContainer');
+    contentContainer.innerHTML = ''; // Clear previous content
+
+    const contentLength = Math.max(rssContent.length, tubeContent.length);
+
+    for (let i = 0; i < contentLength; i++) {
+        if (i < tubeContent.length) {
+            const tubeDiv = document.createElement('div');
+            tubeDiv.className = 'contentItem';
+            tubeDiv.innerHTML = tubeContent[i];
+            contentContainer.appendChild(tubeDiv);
+        }
+        if (i < rssContent.length) {
+            const rssDiv = document.createElement('div');
+            rssDiv.className = 'contentItem';
+            rssDiv.innerHTML = rssContent[i];
+            contentContainer.appendChild(rssDiv);
+        }
     }
 }
-
-function renderThumbnails(data) {
-    const videoList = document.getElementById('videoList');
-    videoList.innerHTML = '';
-    data.forEach(entry => {
-        const videoItem = document.createElement('div');
-        videoItem.className = 'videoItem';
-        videoItem.onclick = () => showPopup(entry.videoId);
-
-        const img = document.createElement('img');
-        img.dataset.src = entry.thumbnail; // 레이지 로딩을 위한 데이터 속성
-        img.alt = "Thumbnail";
-        img.className = 'thumbnail lazy'; // 레이지 클래스 추가
-
-        const title = document.createElement('div');
-        title.className = 'title';
-        title.textContent = entry.title;
-
-        videoItem.appendChild(img);
-        videoItem.appendChild(title);
-        videoList.appendChild(videoItem);
-    });
-}
-
-function lazyLoadImages() {
-    const lazyImages = [].slice.call(document.querySelectorAll("img.lazy"));
-
-    if ("IntersectionObserver" in window) {
-        let lazyImageObserver = new IntersectionObserver(function(entries, observer) {
-            entries.forEach(function(entry) {
-                if (entry.isIntersecting) {
-                    let lazyImage = entry.target;
-                    lazyImage.src = lazyImage.dataset.src;
-                    lazyImage.classList.remove("lazy");
-                    lazyImageObserver.unobserve(lazyImage);
-                }
-            });
-        });
-
-        lazyImages.forEach(function(lazyImage) {
-            lazyImageObserver.observe(lazyImage);
-        });
-    } else {
-        // Fallback for older browsers
-        lazyImages.forEach(function(lazyImage) {
-            lazyImage.src = lazyImage.dataset.src;
-        });
-    }
-}
-
-function showPopup(videoId) {
-    const popup = document.getElementById('popup');
-    const overlay = document.getElementById('overlay');
-    const videoPlayer = document.getElementById('videoPlayer');
-
-    videoPlayer.innerHTML = `<iframe width="100%" height="315" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
-    
-    popup.style.display = 'block';
-    overlay.style.display = 'block';
-}
-
-function closePopup() {
-    const popup = document.getElementById('popup');
-    const overlay = document.getElementById('overlay');
-    const videoPlayer = document.getElementById('videoPlayer');
-
-    popup.style.display = 'none';
-    overlay.style.display = 'none';
-    videoPlayer.innerHTML = '';
-}
-
-document.addEventListener('DOMContentLoaded', loadVideos);
