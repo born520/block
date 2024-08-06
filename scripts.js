@@ -1,51 +1,43 @@
 const rssUrl = 'https://born520.github.io/rss/';
 const tubeUrl = 'https://born520.github.io/tube/';
-let currentIndex = 0;
 let rssContent = [];
 let tubeContent = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    loadRssContent();
-    loadTubeContent();
+    Promise.all([loadRssContent(), loadTubeContent()]).then(showAlternatingContent);
 });
 
 function loadRssContent() {
-    fetch(rssUrl)
+    return fetch(rssUrl)
         .then(response => response.text())
         .then(html => {
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-            const items = doc.querySelectorAll('item'); // Assuming RSS format
+            const items = doc.querySelectorAll('.rssItem'); // Assuming RSS content is wrapped in .rssItem
             rssContent = Array.from(items).map(item => item.outerHTML);
-            if (tubeContent.length > 0) {
-                showNextContent();
-            }
         })
         .catch(error => console.error('Error loading RSS content:', error));
 }
 
 function loadTubeContent() {
-    fetch(tubeUrl)
+    return fetch(tubeUrl)
         .then(response => response.text())
         .then(html => {
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
             const items = doc.querySelectorAll('.videoItem'); // Assuming each video is in a .videoItem class
             tubeContent = Array.from(items).map(item => item.outerHTML);
-            if (rssContent.length > 0) {
-                showNextContent();
-            }
         })
         .catch(error => console.error('Error loading Tube content:', error));
 }
 
-function showNextContent() {
+function showAlternatingContent() {
     const contentContainer = document.getElementById('contentContainer');
     contentContainer.innerHTML = ''; // Clear previous content
 
-    const contentLength = Math.max(rssContent.length, tubeContent.length);
+    const maxLength = Math.max(rssContent.length, tubeContent.length);
 
-    for (let i = 0; i < contentLength; i++) {
+    for (let i = 0; i < maxLength; i++) {
         if (i < tubeContent.length) {
             const tubeDiv = document.createElement('div');
             tubeDiv.className = 'contentItem';
