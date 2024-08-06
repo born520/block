@@ -3,16 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mixed Content Viewer</title>
+    <title>Combined Content Viewer</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <h1>Combined Content Viewer</h1>
     <div id="contentContainer">
-        <div id="rssContent"></div>
-        <div id="tubeContent"></div>
+        <iframe src="https://born520.github.io/rss/" class="contentFrame" title="RSS Content"></iframe>
+        <iframe src="https://born520.github.io/tube/" class="contentFrame" title="Tube Content"></iframe>
     </div>
-    <button id="toggleContent">다음 보기</button>
-
-    <script src="scripts.js"></script>
 </body>
 </html>
