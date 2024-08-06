@@ -27,15 +27,18 @@ function displayContents(rssItems, tubeItems) {
     const contentContainer = document.getElementById('contentContainer');
     contentContainer.innerHTML = '';
 
-    rssItems.forEach(item => {
-        const div = document.createElement('div');
-        div.innerHTML = `<h3>${item.title}</h3><p>${item.description}</p>`;
-        contentContainer.appendChild(div);
-    });
+    const maxItems = Math.max(rssItems.length, tubeItems.length);
+    for (let i = 0; i < maxItems; i++) {
+        if (i < rssItems.length) {
+            const div = document.createElement('div');
+            div.innerHTML = `<h3>${rssItems[i].title}</h3><p>${rssItems[i].description}</p>`;
+            contentContainer.appendChild(div);
+        }
 
-    tubeItems.forEach(item => {
-        const div = document.createElement('div');
-        div.innerHTML = `<h3>${item.title}</h3><img src="${item.thumbnail}" alt="Thumbnail">`;
-        contentContainer.appendChild(div);
-    });
+        if (i < tubeItems.length) {
+            const div = document.createElement('div');
+            div.innerHTML = `<h3>${tubeItems[i].title}</h3><img src="${tubeItems[i].thumbnail}" alt="Thumbnail">`;
+            contentContainer.appendChild(div);
+        }
+    }
 }
