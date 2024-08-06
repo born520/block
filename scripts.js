@@ -1,27 +1,50 @@
-function loadRssContent() {
-    return fetch(rssUrl)
+const rssUrl = 'https://born520.github.io/rss/';
+const tubeUrl = 'https://born520.github.io/tube/';
+let rssItems = [];
+let tubeItems = [];
+let currentIndex = 0;
+
+document.addEventListener('DOMContentLoaded', () => {
+    Promise.all([fetchContent(rssUrl, 'rss'), fetchContent(tubeUrl, 'tube')])
+        .then(() => displayContent())
+        .catch(error => console.error('Error loading content:', error));
+});
+
+function fetchContent(url, type) {
+    return fetch(url)
         .then(response => response.text())
         .then(html => {
-            console.log("Loaded RSS Content:", html);  // 로딩된 RSS HTML 로그 출력
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-            const items = doc.querySelectorAll('.rssItem'); // 적절한 선택자 사용
-            rssContent = Array.from(items).map(item => item.outerHTML);
-            console.log("Parsed RSS Items:", rssContent);  // 파싱된 아이템 로그 출력
-        })
-        .catch(error => console.error('Error loading RSS content:', error));
+            const items = doc.querySelectorAll(type === 'rss' ? 'item' : '.videoItem'); // Adjust selectors as needed
+            const content = Array.from(items).map(item => item.outerHTML);
+
+            if (type === 'rss') {
+                rssItems = content;
+            } else {
+                tubeItems = content;
+            }
+        });
 }
 
-function loadTubeContent() {
-    return fetch(tubeUrl)
-        .then(response => response.text())
-        .then(html => {
-            console.log("Loaded Tube Content:", html);  // 로딩된 Tube HTML 로그 출력
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const items = doc.querySelectorAll('.videoItem'); // 적절한 선택자 사용
-            tubeContent = Array.from(items).map(item => item.outerHTML);
-            console.log("Parsed Tube Items:", tubeContent);  // 파싱된 아이템 로그 출력
-        })
-        .catch(error => console.error('Error loading Tube content:', error));
+function displayContent() {
+    const contentContainer = document.getElementById('contentContainer');
+    contentContainer.innerHTML = ''; // Clear the container
+
+    const maxItems = Math.max(rssItems.length, tubeItems.length);
+    for (let i = 0; i < maxItems; i++) {
+        if (i < rssItems.length) {
+            const rssElement = document.createElement('div');
+            rssElement.className = 'contentItem';
+            rssElement.innerHTML = rssItems[i];
+            contentContainer.appendChild(rssElement);
+        }
+
+        if (i < tubeItems.length) {
+            const tubeElement = document.createElement('div');
+            tubeElement.className = 'contentItem';
+            tubeElement.innerHTML = tubeItems[i];
+            contentContainer.appendChild(tubeElement);
+        }
+    }
 }
